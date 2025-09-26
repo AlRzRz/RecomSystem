@@ -21,10 +21,10 @@ def main():
     load_dotenv()
     client = OpenAI(api_key=os.getenv('OPENAPI_KEY'))
 
-    fullProducts = pd.read_csv('products.csv')
+    fullProducts = pd.read_csv('newproducts.csv')
     fullProductsList = fullProducts.to_dict(orient='records')
 
-    with open("embeddings.pkl", "rb") as f:
+    with open("newembeddings.pkl", "rb") as f:
         embeddings = pickle.load(f)
 
     user_query = input('What product would you like to search for?\n')

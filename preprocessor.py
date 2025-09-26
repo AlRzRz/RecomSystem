@@ -6,6 +6,7 @@ import numpy as np
 from dotenv import load_dotenv
 import os
 import pickle
+import time
 
 
 # Amazon product descriptions dataset
@@ -21,6 +22,13 @@ Description: {productDict['description']}
 """
 
 
+def split_into_chunks(lst, chunk_size=60):
+
+    return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+
+
+
+
 def generateEmbeddings(productList, encoding='cl100k_base'):
 
     formattedProducts = [formatDictToString(product) for product in productList]
@@ -31,21 +39,27 @@ def generateEmbeddings(productList, encoding='cl100k_base'):
     for product_description in formattedProducts:
         tokens = encoding.encode(product_description)
         total_tokens += len(tokens)
-
     print(f'Total tokens in current productList: {total_tokens}')
 
     load_dotenv()
     client = OpenAI(api_key=os.getenv('OPENAPI_KEY'))
     
-    embeddingModelResp = client.embeddings.create(
-        input=formattedProducts,
-        model='text-embedding-3-small'
-    ).model_dump()
+    splits = split_into_chunks(formattedProducts)
 
-    print(embeddingModelResp)
-    final_embeddings = [item['embedding'] for item in embeddingModelResp['data']]
+    all_embeddings = []
+
+    for split in splits:
+        time.sleep(0.4)
+        embeddingModelResp = client.embeddings.create(
+            input=split,
+            model='text-embedding-3-small'
+        ).model_dump()
+
+        print(embeddingModelResp)
+        final_embeddings = [item['embedding'] for item in embeddingModelResp['data']]
+        all_embeddings.extend(final_embeddings)
     
-    return final_embeddings
+    return all_embeddings
 
 
 
@@ -54,21 +68,31 @@ def generateCSVAttachEmbeddings():
     df = pd.read_csv('trimmed.csv', index_col='Index')
     
     # Using a subset of 70 products to stay below embedding token limit (testing purposes)
-    cleaned = df.dropna().iloc[:70].copy()
+    # cleaned = df.dropna().iloc[:70].copy()
+    cleaned = df.dropna().copy()
+
 
     records = cleaned.to_dict(orient='records')
 
     product_embeddings = generateEmbeddings(records)
 
-    with open("embeddings.pkl", "wb") as f:
+    with open("newembeddings.pkl", "wb") as f:
         pickle.dump(product_embeddings, f)
 
-    cleaned.to_csv('products.csv')
+    cleaned.to_csv('newproducts.csv')
+
+
+def testing():
+    df = pd.read_csv('trimmed.csv', index_col='Index')
+
+    print(df.shape)
+
+
 
 
 if __name__ == '__main__':
     generateCSVAttachEmbeddings()
-
+    # testing()
 
 
 
