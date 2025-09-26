@@ -10,6 +10,7 @@ import pickle
 
 # Amazon product descriptions dataset
 # df = pd.read_parquet("hf://datasets/philschmid/amazon-product-descriptions-vlm/data/train-00000-of-00001.parquet")
+# [ ] Currently only using 70 products. Actuall dataset was 120522 tokens. Subset into smaller lists and send the embedding requests (if it was necessary to use the whole dataset)
 
 
 def formatDictToString(productDict):
@@ -22,7 +23,6 @@ Description: {productDict['description']}
 
 def generateEmbeddings(productList, encoding='cl100k_base'):
 
-    # [ ] Currently only using 70 products. Actuall dataset was 120522 tokens. Subset into smaller lists and send the embedding requests (if it was necessary to use the whole dataset)
     formattedProducts = [formatDictToString(product) for product in productList]
 
     total_tokens = 0
@@ -66,8 +66,6 @@ def generateCSVAttachEmbeddings():
     cleaned.to_csv('products.csv')
 
 
-
-
 if __name__ == '__main__':
     generateCSVAttachEmbeddings()
 
@@ -78,18 +76,23 @@ if __name__ == '__main__':
 
 
 
-    # Early commented set-up
-    
-    # ds = load_dataset("philschmid/amazon-product-descriptions-vlm", split="train")
-    # df = ds.to_pandas()
-    # df.to_csv('out.csv')
-    # df = pd.read_csv('out.csv')
-    # print(df.shape)
-    # df_trimmed = df[['Product Name', 'Category', 'Selling Price', 'Product Url', 'description']]
-    # df_trimmed.to_csv('trimmed.csv')
-    # print(df.columns)
-    # print(df.iloc[:, 0].name)
-    # new = df.drop(df.iloc[:, 0].name, axis=1)
-    # print(new.columns)
-    # rows_with_any_na = df[df.isnull().any(axis=1)]
-    # print(rows_with_any_na)
+
+
+
+
+
+# Early commented set-up
+
+# ds = load_dataset("philschmid/amazon-product-descriptions-vlm", split="train")
+# df = ds.to_pandas()
+# df.to_csv('out.csv')
+# df = pd.read_csv('out.csv')
+# print(df.shape)
+# df_trimmed = df[['Product Name', 'Category', 'Selling Price', 'Product Url', 'description']]
+# df_trimmed.to_csv('trimmed.csv')
+# print(df.columns)
+# print(df.iloc[:, 0].name)
+# new = df.drop(df.iloc[:, 0].name, axis=1)
+# print(new.columns)
+# rows_with_any_na = df[df.isnull().any(axis=1)]
+# print(rows_with_any_na)
