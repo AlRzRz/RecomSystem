@@ -1,9 +1,12 @@
 import pandas as pd
 from datasets import load_dataset
 import tiktoken
+from openai import OpenAI
+import numpy as np
+from dotenv import load_dotenv
+import os
+import pickle
 
-# [x] Create function that generates a csv of the original dataset appended with the embeddings
-# [ ] Create embeddings for all products in the dataset
 
 # Amazon product descriptions dataset
 # df = pd.read_parquet("hf://datasets/philschmid/amazon-product-descriptions-vlm/data/train-00000-of-00001.parquet")
@@ -16,16 +19,33 @@ Category: {productDict['Category']},
 Description: {productDict['description']}
 """
 
+
 def generateEmbeddings(productList, encoding='cl100k_base'):
-    
+
+    # [ ] Currently only using 70 products. Actuall dataset was 120522 tokens. Subset into smaller lists and send the embedding requests (if it was necessary to use the whole dataset)
     formattedProducts = [formatDictToString(product) for product in productList]
 
     total_tokens = 0
+    encoding = tiktoken.get_encoding(encoding)
 
     for product_description in formattedProducts:
-        pass
+        tokens = encoding.encode(product_description)
+        total_tokens += len(tokens)
 
-    return total_tokens
+    print(f'Total tokens in current productList: {total_tokens}')
+
+    load_dotenv()
+    client = OpenAI(api_key=os.getenv('OPENAPI_KEY'))
+    
+    embeddingModelResp = client.embeddings.create(
+        input=formattedProducts,
+        model='text-embedding-3-small'
+    ).model_dump()
+
+    print(embeddingModelResp)
+    final_embeddings = [item['embedding'] for item in embeddingModelResp['data']]
+    
+    return final_embeddings
 
 
 
@@ -33,13 +53,17 @@ def generateCSVAttachEmbeddings():
 
     df = pd.read_csv('trimmed.csv', index_col='Index')
     
-    cleaned = df.dropna()
-    # print(cleaned.shape)
+    # Using a subset of 70 products to stay below embedding token limit (testing purposes)
+    cleaned = df.dropna().iloc[:70].copy()
 
-    list_of_dicts = cleaned.to_dict(orient='records')
-    # print(list_of_dicts[0].keys())
+    records = cleaned.to_dict(orient='records')
 
-    print(generateEmbeddings(list_of_dicts))
+    product_embeddings = generateEmbeddings(records)
+
+    with open("embeddings.pkl", "wb") as f:
+        pickle.dump(product_embeddings, f)
+
+    cleaned.to_csv('products.csv')
 
 
 
@@ -48,7 +72,15 @@ if __name__ == '__main__':
     generateCSVAttachEmbeddings()
 
 
-        # ds = load_dataset("philschmid/amazon-product-descriptions-vlm", split="train")
+
+
+
+
+
+
+    # Early commented set-up
+    
+    # ds = load_dataset("philschmid/amazon-product-descriptions-vlm", split="train")
     # df = ds.to_pandas()
     # df.to_csv('out.csv')
     # df = pd.read_csv('out.csv')
